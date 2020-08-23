@@ -1,0 +1,210 @@
+#program shmup
+#autoline 10, 10
+; NextBASIC Shmup!
+RUN AT 3
+PROC main()
+;
+DEFPROC playGame()
+LOCAL %i, %c, %l, %f
+LET %s=0: LET %c=10: LET %l=0: LET %f=4: LET %o=0
+REPEAT 
+SPRITE MOVE 
+; Checking kills
+FOR %i=49 TO 56
+IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,7): IF %k THEN PROC kill(%k,%i)
+NEXT %i
+; Player movement FSM
+PROC filteredInput() TO %i
+IF %(i=1) AND NOT (s=1) THEN PROC moveShip(%4, %0, %1, % BIN 0001, %1)
+IF %(i=2) AND NOT (s=2) THEN PROC moveShip(%-4, %0, %1, % BIN 1001, %2)
+IF %(i=3) AND NOT (s=3) THEN PROC moveShip(%0, %-4, %0, % BIN 0001, %3)
+IF %(i=4) AND NOT (s=4) THEN PROC moveShip(%0, %4, %0, % BIN 0001, %4)
+IF %(i=5) AND NOT (s=5) THEN PROC moveShip(%3, %-3, %1, % BIN 0001, %5)
+IF %(i=6) AND NOT (s=6) THEN PROC moveShip(%3, %3, %1, % BIN 0001, %6)
+IF %(i=7) AND NOT (s=7) THEN PROC moveShip(%-3, %-3, %1, % BIN 1001, %7)
+IF %(i=8) AND NOT (s=8) THEN PROC moveShip(%-3, %3, %1, % BIN 1001, %8)
+IF %(i=0) AND NOT (s=0) THEN PROC stopShip()
+; Firing weapon
+IF %c>0 THEN %c=%c-1
+IF %(c=0) AND ( IN k(0)&k(1)=k(2)) THEN PROC shoot() TO %c
+; Scroll background
+LET %f=%f-1
+IF %f=0 THEN PROC scroll(%l) TO %l: LET %f=4
+; Play buffered sounds
+PROC playSounds()
+REPEAT UNTIL 0
+ENDPROC
+;
+DEFPROC shoot()
+LOCAL %x, %l
+; Find an unused player shot/laser sprite
+PROC unusedSpr(49,56) TO %l
+IF %l=57 THEN ENDPROC =%2
+; Start shot from player position
+LET %x=% SPRITE AT (48,0)
+SPRITE %l,%x,% SPRITE AT (48,1)-7,%2,%1
+SPRITE CONTINUE %l,%x STOP ,%18 TO 190 STEP -8 RUN ,%2,% BIN 11
+PROC addA(9): PROC addA(15): PROC addA(21)
+PROC addA(27): PROC addA(30)
+ENDPROC =%7
+;
+DEFPROC kill(%k,%s)
+LOCAL %x,%y,%e
+LET %x=% SPRITE AT (k,0): LET %y=% SPRITE AT (k,1)
+; This will get a lot more complex...
+SPRITE %s,,,,0: SPRITE %k,,,,0
+LET %o=%o+1: REM Score up
+PROC unusedSpr(60,75) TO %e
+IF %e=76 THEN ENDPROC 
+SPRITE %e,%x,%y,5,1: ; Explosion
+SPRITE CONTINUE %e, STOP , STOP ,5 TO 10, BIN 1100000
+PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
+PROC addB(249,4,1): PROC addB(252,5,0)
+ENDPROC
+;
+DEFPROC addA(%s)
+IF %u=63 THEN LET %u=0: ELSE LET %u=%u+1
+LET %a(u)=%s
+ENDPROC 
+;
+DEFPROC addB(%s, %c, %n)
+IF %v=63 THEN LET %v=0: ELSE LET %v=%v+1
+LET %b(v)=%s: LET %c(v)=%c: LET %n(v)=%n
+ENDPROC 
+;
+DEFPROC playSounds()
+LOCAL %x, %y, %z, %w: ; x=AC y=B z=noise
+; as PSG mixer, 1 = disabled, 0 = enabled
+LET %x=%(a=u): LET %y=%(b=v):; disabled if empty queue
+IF %y THEN LET %z=1: ELSE LET %z=%1-n(b): ; Invert %n(b)
+LET %w=%(16*z)+(5*x)+(2*y): ; needed mixer settings
+IF %(m<>w) THEN PROC psg(7, %232+w): LET %m=%w
+IF %( NOT x) THEN PROC playA()
+IF %( NOT y) THEN PROC playB()
+ENDPROC 
+;
+DEFPROC playA()
+IF %a=63 THEN LET %a=0: ELSE LET %a=%a+1
+PROC psg(0,%a(a)): ; ch A fine tone
+PROC psg(4,%a(a)): ; ch C fine tone
+ENDPROC 
+;
+DEFPROC playB()
+IF %b=63 THEN LET %b=0: ELSE LET %b=%b+1
+PROC psg(3,%c(b)): ; ch B coarse tone
+PROC psg(2,%b(b)): ; ch B fine tone
+ENDPROC 
+;
+DEFPROC moveShip(%x,%y,%p,%f,%n)
+SPRITE 48,,,%p,%f
+SPRITE CONTINUE 48,32 TO 272 STEP % SGN {x} RUN ,32 TO 208 STEP % SGN {y} RUN ,%p
+LET %s=%n
+ENDPROC 
+;
+DEFPROC stopShip()
+SPRITE 48,,,0,1
+SPRITE PAUSE 48
+LET %s=0
+ENDPROC 
+;
+DEFPROC filteredInput()
+LOCAL %r,%l,%u,%d
+LET %r=%( IN k(3)&k(4)=k(5))
+LET %l=%( IN k(6)&k(7)=k(8))
+LET %u=%( IN k(9)&k(10)=k(11))
+LET %d=%( IN k(12)&k(13)=k(14))
+IF %(r&l) THEN LET %r=%0: LET %l=%0
+IF %(u&d) THEN LET %u=%0: LET %d=%0
+IF %(u&r) THEN ENDPROC =%5
+IF %(d&r) THEN ENDPROC =%6
+IF %(u&l) THEN ENDPROC =%7
+IF %(d&l) THEN ENDPROC =%8
+IF %r THEN ENDPROC =%1
+IF %l THEN ENDPROC =%2
+IF %u THEN ENDPROC =%3
+IF %d THEN ENDPROC =%4
+ENDPROC =%0
+;
+DEFPROC scroll(%p)
+LET %p=%p-1
+IF %p=65535 THEN LET %p=191
+LAYER 2,1: LAYER AT %0,%p: LAYER 0
+PRINT #1; AT 1,3;%o;"0": REM Update score
+ENDPROC =%p
+;
+DEFPROC unusedSpr(%l,%u)
+LET %u=%u+1: ; Upper included in range
+REPEAT : WHILE %( SPRITE l)
+LET %l=%l+1
+REPEAT UNTIL %l=u
+ENDPROC =%l
+;
+DEFPROC psg(%r,%v)
+OUT 65533,%r: OUT 49149,%v
+ENDPROC 
+;
+DEFPROC initGame()
+LAYER 2,1: CLS 
+.bmpload assets/shmup_bg.bmp
+LAYER 0
+; Player Spaceship
+SPRITE 48,150,160,0,1
+SPRITE CONTINUE 48,32 TO 272 STOP ,16 TO 208 STOP ,0, BIN 10,0
+;
+; Alien enemies for testing purposes, get this out of here
+SPRITE 1,16,32,3,1
+SPRITE CONTINUE 1,16 TO 288 STEP 2 RUN , STOP ,3, BIN 10,0
+SPRITE 2,288,48,3,1
+SPRITE CONTINUE 2,16 TO 288 STEP -2 RUN , STOP ,3, BIN 10,0
+SPRITE 3,130,0,3,1
+SPRITE CONTINUE 3, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
+SPRITE 4,170,0,3,1
+SPRITE CONTINUE 4, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
+;
+PRINT #1; AT 1,0; INK 6;"SC"
+; Init sounds
+PROC psg(7, 255) : LET %m=23 : ; mixer
+PROC psg(6, 20) : ;  noise level
+PROC psg(8, 13) : ;  ch A volume
+PROC psg(9, 15) : ;  ch B volume
+PROC psg(10, 13) : ; ch C volume
+ENDPROC 
+;
+DEFPROC main()
+LOCAL %c
+SPRITE CLEAR : PALETTE CLEAR 
+LOAD "assets/shmup.spr" BANK 12
+SPRITE BANK 12
+SPRITE STOP : ; Use batching mode
+PAPER 0: INK 7: BORDER 0
+SPRITE PRINT 1: SPRITE BORDER 1
+LET %c=0
+REPEAT 
+LAYER CLEAR : CLS 
+POKE 23658,0: REM turn off CAPS LOCK
+PRINT AT 3,6; INK 2; FLASH 1;" NextBASIC Shmup! "
+PRINT AT 6,0;"Control options:"
+PRINT AT 8,5;"Keyboard - Q A O P Space"
+PRINT AT 10,5;"Kempston joystick"
+PRINT AT 14,2; INK 5;"Press "; INVERSE 1;"FIRE"; INVERSE 0;" in your preferred"' TAB 4;"control option to start"
+REPEAT 
+IF %( IN 32766 & 1 = 0) THEN PROC setInput(0): LET %c=1
+IF %( IN 31 & 16 = 16) THEN PROC setInput(1): LET %c=1
+REPEAT UNTIL %c=1
+PROC initGame()
+PROC playGame()
+REPEAT UNTIL 0
+ENDPROC 
+;
+DEFPROC setInput(%l)
+LOCAL %i,%n
+RESTORE 
+FOR %n=0 TO %l: FOR %i=0 TO 14
+READ %k(i)
+NEXT %i: NEXT %n
+ENDPROC 
+;
+DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0 : ; Keyboard
+DATA 31,16,16,31,1,1,31,2,2,31,8,8,31,4,4 : ; Kempston
+STOP 
+SAVE "shmup.bas"

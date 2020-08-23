@@ -43,7 +43,7 @@ Sound was though out as a "circular queue", where %a() is the queue, %a is the
 "head" or "front", which points to the next tone to play, and %v is the "tail"
 or "rear" of the data, which is the last tone included in the queue.
 
-Being in a circular queue, %b and %w only advance in one direction, and once
+Being in a circular queue, %a and %v only advance in one direction, and once
 they reach the end, they go back to the beginning.
 
 
@@ -65,23 +65,24 @@ completely "filled", it just start to overwrite old tones. In other words,
 doing a full "turn" with the "tail" without making the "head" advance to catch
 up will make the previously buffered sounds disappear.
 
-%b(), %b and %w comprise a second queue, for a second audio channel. This one
-includes coarse tone info, %c(), and noise, %n(), as other queues with the same
-head and tail, %b and %w.
+%b(), %b and %w comprise a second queue, for a second audio channel. There are
+other queues: coarse tone, %c(), and noise, %n(). These use the same head and
+tail as the second channel queue, %b and %w, because they play through that
+channel.
 
 
 Sound playing
 -------------
 
-Only one AY will be used, as "2 channels", since A and C will play the same
+Only one AY will be used, with "2 channels", since A and C will play the same
 sound, and their coarse setting will always be 0. On the other side, B will have
 coarse and fine, and will be able to produce noise when necessary.
 
 Then, 4 elements are needed:
-1.- Channel A & C fine tone - a()
-2.- Channel B fine tone     - b()
-3.- Channel B coarse tone   - c()
-4.- Noise (on or off)       - n()
+1.- Channel A & C fine tone - a() - a
+2.- Channel B fine tone     - b() - b
+3.- Channel B coarse tone   - c() - b
+4.- Noise (on or off)       - n() - b
 
 As said in the previous section, 4 circular queues will be used, with the last
 3 using the same "head" and "tail", %b and %w respectively.
@@ -97,7 +98,7 @@ settings in %m, as a binary value with 0 = enabled and 1 = disabled:
 
 Then, %m = (16*N) + (5*A) + (2*B)
 
-If you ask yourself what is all of this and why it is this way, please read my
+If you ask yourself what is all of this, why it works this way, please read my
 guide about generating sounds through OUT commands to the PSG:
 https://www.specnext.com/forum/viewtopic.php?f=14&t=1796
 
@@ -157,8 +158,8 @@ Pattern Use
 To Do
 -----
 
-Making it playable! Spawning enemies, make them shoot, and most importantly,
-make the player able to die.
+Have to make it playable! Spawn enemies, make them shoot, make the player able
+to die. Have to provide a challenge of some sort.
 
 
 Acknowledgments

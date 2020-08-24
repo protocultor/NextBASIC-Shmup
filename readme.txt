@@ -40,14 +40,14 @@ Sound buffering
 ---------------
 
 Sound was though out as a "circular queue", where %a() is the queue, %a is the
-"head" or "front", which points to the next tone to play, and %v is the "tail"
+"head" or "front", which points to the next tone to play, and %u is the "tail"
 or "rear" of the data, which is the last tone included in the queue.
 
-Being in a circular queue, %a and %v only advance in one direction, and once
+Being in a circular queue, %a and %u only advance in one direction, and once
 they reach the end, they go back to the beginning.
 
 
-      %a                %v
+      %a                %u
        |                 |
        v                 ]
  *-----------------------------------------------------------------* <- %a()
@@ -65,9 +65,9 @@ completely "filled", it just start to overwrite old tones. In other words,
 doing a full "turn" with the "tail" without making the "head" advance to catch
 up will make the previously buffered sounds disappear.
 
-%b(), %b and %w comprise a second queue, for a second audio channel. There are
+%b(), %b and %v comprise a second queue, for a second audio channel. There are
 other queues: coarse tone, %c(), and noise, %n(). These use the same head and
-tail as the second channel queue, %b and %w, because they play through that
+tail as the second channel queue, %b and %v, because they play through that
 channel.
 
 
@@ -79,13 +79,13 @@ sound, and their coarse setting will always be 0. On the other side, B will have
 coarse and fine, and will be able to produce noise when necessary.
 
 Then, 4 elements are needed:
-1.- Channel A & C fine tone - a() - a
-2.- Channel B fine tone     - b() - b
-3.- Channel B coarse tone   - c() - b
-4.- Noise (on or off)       - n() - b
+1.- Channel A & C fine tone - %a() - %a - %u
+2.- Channel B fine tone     - %b() - %b - %v
+3.- Channel B coarse tone   - %c() - %b - %v
+4.- Noise (on or off)       - %n() - %b - %v
 
 As said in the previous section, 4 circular queues will be used, with the last
-3 using the same "head" and "tail", %b and %w respectively.
+3 using the same "head" and "tail", %b and %v respectively.
 
 To avoid changing the PSG mixer settings every time, we will store previous
 settings in %m, as a binary value with 0 = enabled and 1 = disabled:
@@ -123,14 +123,15 @@ Name    Type        Use
 %f      int         movement Frames to wait before scroll
 %o      int         scOre
 %m      int         current PSG Mixer settings
+%w      int         needed mixer settings (to compare with %m)
 %a()    int array   circular queue for A&C channels' sounds
 %a      int         "head" of A queue
-%v      int         "tail" of A queue
+%u      int         "tail" of A queue
 %b()    int array   circular queue for B channel's fine sounds
 %c()    int array   circular queue for B channel's Coarse sounds
 %n()    int array   circular queue for Noise on/off (B channel)
 %b      int         "head" of B queues
-%w      int         "tail" of B queues
+%v      int         "tail" of B queues
 
 
 Sprite IDs
@@ -141,7 +142,7 @@ Id      Use
 49-57   Player shots
 1-30    Enemies (?)
 31-47   Enemies' shots (??)
-60-77   Enemies' explosions/deaths (???)
+60-77   Enemies' explosions/deaths
 
 
 Sprite patterns

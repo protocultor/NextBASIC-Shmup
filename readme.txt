@@ -34,6 +34,7 @@ State    Use
 6        Diagonal Down/Right
 7        Diagonal Up/Left
 8        Diagonal Down/Left
+9        Limbo (player dead, used to disable input)
 
 
 Sound buffering
@@ -121,7 +122,6 @@ Name    Type        Use
 %k()    int array   player controls (Keys or Kempston)
 %l      int         Layer 2 position, for scroll effect
 %f      int         movement Frames to wait before scroll
-%o      int         scOre
 %m      int         current PSG Mixer settings
 %w      int         needed mixer settings (to compare with %m)
 %a()    int array   circular queue for A&C channels' sounds
@@ -132,6 +132,20 @@ Name    Type        Use
 %n()    int array   circular queue for Noise on/off (B channel)
 %b      int         "head" of B queues
 %v      int         "tail" of B queues
+%p()    int array   Player state (see below)
+%d      int         player truly Dead (go to game over)
+
+
+Player state
+------------
+
+%p() is an array with info about the player:
+
+Index  Use
+0      Alive (1) or dead (0)
+1      Lives
+2      Score
+3      Timer to respawn (used when dead)
 
 
 Sprite IDs
@@ -143,6 +157,7 @@ Id      Use
 1-30    Enemies (?)
 31-47   Enemies' shots (??)
 60-77   Enemies' explosions/deaths
+127     Player's death
 
 
 Sprite patterns

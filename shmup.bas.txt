@@ -5,16 +5,19 @@ RUN AT 3
 PROC main()
 ;
 DEFPROC playGame()
-LOCAL %i, %c, %l, %f
-LET %s=0: LET %c=10: LET %l=0: LET %f=4: LET %o=0
+LOCAL %i, %c, %l, %f, %d
+LET %s=0: LET %c=10: LET %l=0: LET %f=4: LET %d=0
 REPEAT 
 SPRITE MOVE 
 ; Checking kills
 FOR %i=49 TO 56
-IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,7): IF %k THEN PROC kill(%k,%i)
+IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,4): IF %k THEN PROC kill(%k,%i)
 NEXT %i
+; Checking impact on player
+LET %k=% SPRITE OVER (48,1 TO 47,4)
+IF %k THEN PROC die(%k)
 ; Player movement FSM
-PROC filteredInput() TO %i
+IF %p(0) THEN PROC filteredInput() TO %i: ELSE LET %i=9: LET %s=0: LET %c=2
 IF %(i=1) AND NOT (s=1) THEN PROC moveShip(%4, %0, %1, % BIN 0001, %1)
 IF %(i=2) AND NOT (s=2) THEN PROC moveShip(%-4, %0, %1, % BIN 1001, %2)
 IF %(i=3) AND NOT (s=3) THEN PROC moveShip(%0, %-4, %0, % BIN 0001, %3)
@@ -32,8 +35,33 @@ LET %f=%f-1
 IF %f=0 THEN PROC scroll(%l) TO %l: LET %f=4
 ; Play buffered sounds
 PROC playSounds()
-REPEAT UNTIL 0
-ENDPROC
+; Verify if player can respawn... or show game over
+IF %( NOT p(0)) THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC respawn() TO %d
+REPEAT UNTIL %d
+PRINT AT 11,11; INVERSE 1;" GAME OVER "
+FOR %i=0 TO 47: PAUSE 1: NEXT %i
+ENDPROC 
+;
+DEFPROC die(%k)
+LOCAL %x,%y
+IF %(k>31) THEN SPRITE %k,,,0: ; shots disappear
+LET %x=% SPRITE AT (48,0): LET %y=% SPRITE AT (48,1)
+SPRITE 48,,,,0
+SPRITE 127,%x,%y,5,1: ; Explosion
+SPRITE CONTINUE 127, STOP , STOP ,5 TO 10, BIN 1100000
+PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
+PROC addB(249,4,1): PROC addB(252,5,0)
+; apply "dead state"
+LET %p(0)=0: LET %p(3)=10
+ENDPROC 
+;
+DEFPROC respawn()
+LET %p(1)=%p(1)-1
+IF %p(1)=65535 THEN ENDPROC =%1
+LET %p(0)=1
+PRINT #1; AT 1,31;%p(1): ; Update lives
+SPRITE 48,150,160,0,1
+ENDPROC =%0
 ;
 DEFPROC shoot()
 LOCAL %x, %l
@@ -53,14 +81,14 @@ LOCAL %x,%y,%e
 LET %x=% SPRITE AT (k,0): LET %y=% SPRITE AT (k,1)
 ; This will get a lot more complex...
 SPRITE %s,,,,0: SPRITE %k,,,,0
-LET %o=%o+1: REM Score up
+LET %p(2)=%p(2)+1: ; Score up
 PROC unusedSpr(60,75) TO %e
 IF %e=76 THEN ENDPROC 
 SPRITE %e,%x,%y,5,1: ; Explosion
 SPRITE CONTINUE %e, STOP , STOP ,5 TO 10, BIN 1100000
 PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
 PROC addB(249,4,1): PROC addB(252,5,0)
-ENDPROC
+ENDPROC 
 ;
 DEFPROC addA(%s)
 IF %u=63 THEN LET %u=0: ELSE LET %u=%u+1
@@ -129,7 +157,7 @@ DEFPROC scroll(%p)
 LET %p=%p-1
 IF %p=65535 THEN LET %p=191
 LAYER 2,1: LAYER AT %0,%p: LAYER 0
-PRINT #1; AT 1,3;%o;"0": REM Update score
+PRINT #1; AT 1,3;%p(2);"0": ; Update score
 ENDPROC =%p
 ;
 DEFPROC unusedSpr(%l,%u)
@@ -144,12 +172,12 @@ OUT 65533,%r: OUT 49149,%v
 ENDPROC 
 ;
 DEFPROC initGame()
-LAYER 2,1: CLS 
+LAYER 2,1: CLS
 .bmpload assets/shmup_bg.bmp
 LAYER 0
+LET %p(0)=1: LET %p(1)=2: LET %p(2)=0
 ; Player Spaceship
 SPRITE 48,150,160,0,1
-SPRITE CONTINUE 48,32 TO 272 STOP ,16 TO 208 STOP ,0, BIN 10,0
 ;
 ; Alien enemies for testing purposes, get this out of here
 SPRITE 1,16,32,3,1
@@ -161,7 +189,7 @@ SPRITE CONTINUE 3, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
 SPRITE 4,170,0,3,1
 SPRITE CONTINUE 4, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
 ;
-PRINT #1; AT 1,0; INK 6;"SC"
+PRINT #1; INK 6; AT 1,0;"SC"; AT 1,29;"L"; INK 7; AT 1,31;%p(1)
 ; Init sounds
 PROC psg(7, 255) : LET %m=23 : ; mixer
 PROC psg(6, 20) : ;  noise level
@@ -172,16 +200,15 @@ ENDPROC
 ;
 DEFPROC main()
 LOCAL %c
-SPRITE CLEAR : PALETTE CLEAR 
+PALETTE CLEAR
 LOAD "assets/shmup.spr" BANK 12
 SPRITE BANK 12
 SPRITE STOP : ; Use batching mode
 PAPER 0: INK 7: BORDER 0
 SPRITE PRINT 1: SPRITE BORDER 1
-LET %c=0
 REPEAT 
-LAYER CLEAR : CLS 
-POKE 23658,0: REM turn off CAPS LOCK
+LET %c=0: SPRITE CLEAR : LAYER CLEAR : CLS
+POKE 23658,0: ; turn off CAPS LOCK
 PRINT AT 3,6; INK 2; FLASH 1;" NextBASIC Shmup! "
 PRINT AT 6,0;"Control options:"
 PRINT AT 8,5;"Keyboard - Q A O P Space"

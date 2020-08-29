@@ -6,9 +6,10 @@ PROC main()
 ;
 DEFPROC playGame()
 LOCAL %i, %c, %l, %f, %d
-LET %s=0: LET %c=10: LET %l=0: LET %f=4: LET %d=0
-REPEAT 
-SPRITE MOVE 
+LET %s=0: LET %c=7: LET %l=0: LET %f=4: LET %d=0
+LET %a=0: LET %u=0: LET %b=0: LET %v=0
+REPEAT
+SPRITE MOVE
 ; Checking kills
 FOR %i=49 TO 56
 IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,4): IF %k THEN PROC kill(%k,%i)
@@ -38,9 +39,10 @@ PROC playSounds()
 ; Verify if player can respawn... or show game over
 IF %( NOT p(0)) THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC respawn() TO %d
 REPEAT UNTIL %d
+PROC psg(7, 255) : LET %m=23
 PRINT AT 11,11; INVERSE 1;" GAME OVER "
-FOR %i=0 TO 47: PAUSE 1: NEXT %i
-ENDPROC 
+FOR %i=0 TO 63: PAUSE 1: NEXT %i
+ENDPROC
 ;
 DEFPROC die(%k)
 LOCAL %x,%y
@@ -53,7 +55,7 @@ PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
 PROC addB(249,4,1): PROC addB(252,5,0)
 ; apply "dead state"
 LET %p(0)=0: LET %p(3)=10
-ENDPROC 
+ENDPROC
 ;
 DEFPROC respawn()
 LET %p(1)=%p(1)-1
@@ -83,22 +85,22 @@ LET %x=% SPRITE AT (k,0): LET %y=% SPRITE AT (k,1)
 SPRITE %s,,,,0: SPRITE %k,,,,0
 LET %p(2)=%p(2)+1: ; Score up
 PROC unusedSpr(60,75) TO %e
-IF %e=76 THEN ENDPROC 
+IF %e=76 THEN ENDPROC
 SPRITE %e,%x,%y,5,1: ; Explosion
 SPRITE CONTINUE %e, STOP , STOP ,5 TO 10, BIN 1100000
 PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
 PROC addB(249,4,1): PROC addB(252,5,0)
-ENDPROC 
+ENDPROC
 ;
 DEFPROC addA(%s)
 IF %u=63 THEN LET %u=0: ELSE LET %u=%u+1
 LET %a(u)=%s
-ENDPROC 
+ENDPROC
 ;
 DEFPROC addB(%s, %c, %n)
 IF %v=63 THEN LET %v=0: ELSE LET %v=%v+1
 LET %b(v)=%s: LET %c(v)=%c: LET %n(v)=%n
-ENDPROC 
+ENDPROC
 ;
 DEFPROC playSounds()
 LOCAL %x, %y, %z, %w: ; x=AC y=B z=noise
@@ -109,31 +111,31 @@ LET %w=%(16*z)+(5*x)+(2*y): ; needed mixer settings
 IF %(m<>w) THEN PROC psg(7, %232+w): LET %m=%w
 IF %( NOT x) THEN PROC playA()
 IF %( NOT y) THEN PROC playB()
-ENDPROC 
+ENDPROC
 ;
 DEFPROC playA()
 IF %a=63 THEN LET %a=0: ELSE LET %a=%a+1
 PROC psg(0,%a(a)): ; ch A fine tone
 PROC psg(4,%a(a)): ; ch C fine tone
-ENDPROC 
+ENDPROC
 ;
 DEFPROC playB()
 IF %b=63 THEN LET %b=0: ELSE LET %b=%b+1
 PROC psg(3,%c(b)): ; ch B coarse tone
 PROC psg(2,%b(b)): ; ch B fine tone
-ENDPROC 
+ENDPROC
 ;
 DEFPROC moveShip(%x,%y,%p,%f,%n)
 SPRITE 48,,,%p,%f
 SPRITE CONTINUE 48,32 TO 272 STEP % SGN {x} RUN ,32 TO 208 STEP % SGN {y} RUN ,%p
 LET %s=%n
-ENDPROC 
+ENDPROC
 ;
 DEFPROC stopShip()
 SPRITE 48,,,0,1
 SPRITE PAUSE 48
 LET %s=0
-ENDPROC 
+ENDPROC
 ;
 DEFPROC filteredInput()
 LOCAL %r,%l,%u,%d
@@ -169,7 +171,7 @@ ENDPROC =%l
 ;
 DEFPROC psg(%r,%v)
 OUT 65533,%r: OUT 49149,%v
-ENDPROC 
+ENDPROC
 ;
 DEFPROC initGame()
 LAYER 2,1: CLS
@@ -196,7 +198,7 @@ PROC psg(6, 20) : ;  noise level
 PROC psg(8, 13) : ;  ch A volume
 PROC psg(9, 15) : ;  ch B volume
 PROC psg(10, 13) : ; ch C volume
-ENDPROC 
+ENDPROC
 ;
 DEFPROC main()
 LOCAL %c
@@ -206,7 +208,7 @@ SPRITE BANK 12
 SPRITE STOP : ; Use batching mode
 PAPER 0: INK 7: BORDER 0
 SPRITE PRINT 1: SPRITE BORDER 1
-REPEAT 
+REPEAT
 LET %c=0: SPRITE CLEAR : LAYER CLEAR : CLS
 POKE 23658,0: ; turn off CAPS LOCK
 PRINT AT 3,6; INK 2; FLASH 1;" NextBASIC Shmup! "
@@ -214,24 +216,24 @@ PRINT AT 6,0;"Control options:"
 PRINT AT 8,5;"Keyboard - Q A O P Space"
 PRINT AT 10,5;"Kempston joystick"
 PRINT AT 14,2; INK 5;"Press "; INVERSE 1;"FIRE"; INVERSE 0;" in your preferred"' TAB 4;"control option to start"
-REPEAT 
+REPEAT
 IF %( IN 32766 & 1 = 0) THEN PROC setInput(0): LET %c=1
 IF %( IN 31 & 16 = 16) THEN PROC setInput(1): LET %c=1
 REPEAT UNTIL %c=1
 PROC initGame()
 PROC playGame()
 REPEAT UNTIL 0
-ENDPROC 
+ENDPROC
 ;
 DEFPROC setInput(%l)
 LOCAL %i,%n
-RESTORE 
+RESTORE
 FOR %n=0 TO %l: FOR %i=0 TO 14
 READ %k(i)
 NEXT %i: NEXT %n
-ENDPROC 
+ENDPROC
 ;
 DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0 : ; Keyboard
 DATA 31,16,16,31,1,1,31,2,2,31,8,8,31,4,4 : ; Kempston
-STOP 
-SAVE "shmup.bas"
+STOP
+CLEAR : SAVE "shmup.bas": .bas2txt shmup.bas

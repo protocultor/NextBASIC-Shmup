@@ -41,7 +41,7 @@ IF %( NOT p(0)) THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC respawn() TO %d
 REPEAT UNTIL %d
 PROC psg(7, 255) : LET %m=23
 PRINT AT 11,11; INVERSE 1;" GAME OVER "
-FOR %i=0 TO 63: PAUSE 1: NEXT %i
+FOR %i=0 TO 63: PAUSE 1: NEXT %i: PROC scroll(1)
 ENDPROC
 ;
 DEFPROC die(%k)
@@ -127,7 +127,7 @@ ENDPROC
 ;
 DEFPROC moveShip(%x,%y,%p,%f,%n)
 SPRITE 48,,,%p,%f
-SPRITE CONTINUE 48,32 TO 272 STEP % SGN {x} RUN ,32 TO 208 STEP % SGN {y} RUN ,%p
+SPRITE CONTINUE 48, STEP % SGN {x} RUN , STEP % SGN {y} RUN ,%p
 LET %s=%n
 ENDPROC
 ;
@@ -174,12 +174,12 @@ OUT 65533,%r: OUT 49149,%v
 ENDPROC
 ;
 DEFPROC initGame()
-LAYER 2,1: CLS
-.bmpload assets/shmup_bg.bmp
-LAYER 0
+LAYER 2,1: SPRITE PRINT 1
+LAYER OVER 6: LAYER 0: CLS
 LET %p(0)=1: LET %p(1)=2: LET %p(2)=0
 ; Player Spaceship
 SPRITE 48,150,160,0,1
+SPRITE CONTINUE 48,32 TO 272 STOP ,32 TO 208 STOP ,0, BIN 10,0: ; player behaviour
 ;
 ; Alien enemies for testing purposes, get this out of here
 SPRITE 1,16,32,3,1
@@ -192,24 +192,26 @@ SPRITE 4,170,0,3,1
 SPRITE CONTINUE 4, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
 ;
 PRINT #1; INK 6; AT 1,0;"SC"; AT 1,29;"L"; INK 7; AT 1,31;%p(1)
-; Init sounds
-PROC psg(7, 255) : LET %m=23 : ; mixer
-PROC psg(6, 20) : ;  noise level
-PROC psg(8, 13) : ;  ch A volume
-PROC psg(9, 15) : ;  ch B volume
-PROC psg(10, 13) : ; ch C volume
 ENDPROC
 ;
 DEFPROC main()
 LOCAL %c
-PALETTE CLEAR
-LOAD "assets/shmup.spr" BANK 12
-SPRITE BANK 12
-SPRITE STOP : ; Use batching mode
 PAPER 0: INK 7: BORDER 0
-SPRITE PRINT 1: SPRITE BORDER 1
+LAYER CLEAR : PALETTE CLEAR
+LAYER 2,0: PALETTE DIM 9
+LOAD "assets/shmup_bg.sl2" LAYER
+LOAD "assets/shmup_bg.pal" BANK 12
+LAYER PALETTE 0 BANK 12,0
+LAYER PALETTE 0: BANK 12 CLEAR
+LOAD "assets/shmup.spr" BANK 12
+SPRITE BANK 12: SPRITE STOP
+; Init sounds
+PROC psg(7,255): LET %m=23:; mixer
+PROC psg(6,20): PROC psg(9,15): ; noise & ch B
+PROC psg(8,13): PROC psg(10,13):; ch A & C
 REPEAT
-LET %c=0: SPRITE CLEAR : LAYER CLEAR : CLS
+LET %c=0: LAYER 2,0: SPRITE CLEAR
+LAYER OVER 0 : LAYER 0: CLS
 POKE 23658,0: ; turn off CAPS LOCK
 PRINT AT 3,6; INK 2; FLASH 1;" NextBASIC Shmup! "
 PRINT AT 6,0;"Control options:"

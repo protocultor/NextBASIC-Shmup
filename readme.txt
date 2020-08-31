@@ -174,8 +174,11 @@ Pattern Use
 To Do
 -----
 
-Have to make it playable! Spawn enemies, make them shoot, make the player able
-to die. Have to provide a challenge of some sort.
+Have to make it playable!
+- Spawn enemies in predefines waves
+- Make them shoot
+- Other types of enemies
+- Powerups? Bosses?
 
 
 Acknowledgments
@@ -183,7 +186,9 @@ Acknowledgments
 
 The entire Next Team, for the wonderful machine
 Garry Lancaster, for the language and the Invaders game which inspired this
+Remy Sharp for the info about audio and Layer 2
 You, for your interest in the game and getting this far in the doc :)
 
 Jaime Moreira
 2020-08-23
+Last updated: 2020-08-31

@@ -228,14 +228,15 @@ REPEAT UNTIL 0
 ENDPROC
 ;
 DEFPROC setInput(%l)
-LOCAL %i,%n
-RESTORE
-FOR %n=0 TO %l: FOR %i=0 TO 14
+LOCAL %i
+RESTORE %9990+l
+FOR %i=0 TO 14
 READ %k(i)
-NEXT %i: NEXT %n
+NEXT %i
 ENDPROC
 ;
-DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0 : ; Keyboard
-DATA 31,16,16,31,1,1,31,2,2,31,8,8,31,4,4 : ; Kempston
 STOP
-CLEAR : SAVE "shmup.bas": .bas2txt shmup.bas
+#autoline
+9990 DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0 : ; Keyboard
+9991 DATA 31,16,16,31,1,1,31,2,2,31,8,8,31,4,4 : ; Kempston
+9999 CLEAR : SAVE "shmup.bas": .bas2txt shmup.bas

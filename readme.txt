@@ -7,6 +7,15 @@ features of NextBASIC. Born as a demo for me to learn the language, it grew up a
 lot, and now we will see if it ends up being an actual game :)
 
 
+How to load
+-----------
+
+1.- Copy the contents of this repo to your Next SD card.
+2.- In your Next, go to its folder and type:
+        .txt2bas shmup.bas.txt
+3.- Load the newly created 'shmup.bas' and RUN it.
+
+
 Player movement
 ---------------
 
@@ -19,6 +28,9 @@ of player position and limits of movement.
 
 For info on this and other sprite manipulation commands, see
 NextBASIC_New_Commands_and_Features.pdf in NextZXOS documentation, pages 7-11.
+Direct link:
+https://gitlab.com/thesmog358/tbblue/-/blob/master/docs/nextzxos
+/NextBASIC_New_Commands_and_Features.pdf
 
 
 FSM states
@@ -109,6 +121,28 @@ previous SPRITE MOVE, mixer settings are changed in the PSG and saved to %m.
 Only after that, queues will advance and actual sound will be played.
 
 
+Enemy waves
+-----------
+
+They're in DATA statements, handled by the wave() procedure. First data is the
+amount of enemies in this wave, second is the time to read the next wave, with
+"time" being the amount of SPRITE MOVEs called (see playGame() procedure).
+After that, every enemy is a trio, which indicate type, x-coord and y-coord.
+"Type of enemy" in this context is "how the enemy moves in the screen".
+To finish the wave, there must be a 0.
+
+E.g. the first DATA in the program (line 7 approx.) contains the following:
+                  2,40,    1,130,0,    1,170,0,   0
+This indicates that this wave is composed of 2 enemies, and the next wave after
+this will appear after 40 'time' has passed.
+Then, in this wave the first enemy is type 1, and will appear at x=130, y=0.
+The second enemy is also type 1 and will appear at x=170, y=0.
+Then, the needed "0" to finish the reading of this wave.
+Type 1 enemies descend vertically. This is why the first enemies you see on
+screen are a couple at the top center, descending. You can check the
+different 'types' at the "spawn()" procedure.
+
+
 Variables
 ---------
 
@@ -134,6 +168,7 @@ Name    Type        Use
 %v      int         "tail" of B queues
 %p()    int array   Player state (see below)
 %d      int         player truly Dead (go to game over)
+%e      int         time until next Enemy wave
 
 
 Player state
@@ -146,6 +181,7 @@ Index  Use
 1      Lives
 2      Score
 3      Timer to respawn (used when dead)
+       Also used to remove invulnerability after respawn
 
 
 Sprite IDs
@@ -154,8 +190,8 @@ Sprite IDs
 Id      Use
 48      Player - couldn't be any other id :)
 49-57   Player shots
-1-30    Enemies (?)
-31-47   Enemies' shots (??)
+1-30    Enemies
+31-47   Enemies' shots
 60-77   Enemies' explosions/deaths
 127     Player's death
 
@@ -167,16 +203,15 @@ Pattern Use
 0       Player ship, straight
 1       Player ship, leaning right
 2       Player shot
-3-4     Enemy
-5-10    Explosion animation
+3-8     Explosion animation
+9-13    Enemies and their animations
 
 
 To Do
 -----
 
 Have to make it playable!
-- Spawn enemies in predefines waves
-- Make them shoot
+- Make enemies shoot
 - Other types of enemies
 - Powerups? Bosses?
 
@@ -191,4 +226,4 @@ You, for your interest in the game and getting this far in the doc :)
 
 Jaime Moreira
 2020-08-23
-Last updated: 2020-08-31
+Last updated: 2022-03-12

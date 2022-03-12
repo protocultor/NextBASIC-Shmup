@@ -3,10 +3,16 @@
 ; NextBASIC Shmup!
 RUN AT 3
 PROC main()
+; Data for enemy waves
+DATA 2,40,1,130,0,1,170,0,0
+DATA 2,40,2,16,32,3,288,48,0
+DATA 2,30,4,16,16,5,288,0,0
+; Obligatory ending to reset data and start again
+DATA 0,0,0
 ;
 DEFPROC playGame()
 LOCAL %i, %c, %l, %f, %d
-LET %s=0: LET %c=7: LET %l=0: LET %f=4: LET %d=0
+LET %s=0: LET %c=7: LET %l=0: LET %f=4: LET %d=0: LET %e=30
 LET %a=0: LET %u=0: LET %b=0: LET %v=0
 REPEAT
 SPRITE MOVE
@@ -15,55 +21,77 @@ FOR %i=49 TO 56
 IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,4): IF %k THEN PROC kill(%k,%i)
 NEXT %i
 ; Checking impact on player
-LET %k=% SPRITE OVER (48,1 TO 47,4)
-IF %k THEN PROC die(%k)
+IF %p(0)=1 THEN LET %k=% SPRITE OVER (48,1 TO 47,4): IF %k THEN PROC die(%k)
 ; Player movement FSM
 IF %p(0) THEN PROC filteredInput() TO %i: ELSE LET %i=9: LET %s=0: LET %c=2
-IF %(i=1) AND NOT (s=1) THEN PROC moveShip(%4, %0, %1, % BIN 0001, %1)
-IF %(i=2) AND NOT (s=2) THEN PROC moveShip(%-4, %0, %1, % BIN 1001, %2)
-IF %(i=3) AND NOT (s=3) THEN PROC moveShip(%0, %-4, %0, % BIN 0001, %3)
-IF %(i=4) AND NOT (s=4) THEN PROC moveShip(%0, %4, %0, % BIN 0001, %4)
-IF %(i=5) AND NOT (s=5) THEN PROC moveShip(%3, %-3, %1, % BIN 0001, %5)
-IF %(i=6) AND NOT (s=6) THEN PROC moveShip(%3, %3, %1, % BIN 0001, %6)
-IF %(i=7) AND NOT (s=7) THEN PROC moveShip(%-3, %-3, %1, % BIN 1001, %7)
-IF %(i=8) AND NOT (s=8) THEN PROC moveShip(%-3, %3, %1, % BIN 1001, %8)
-IF %(i=0) AND NOT (s=0) THEN PROC stopShip()
+IF %(i=1) AND NOT (s=1) THEN PROC moveShip(%4, %0, %1, %p(0), %1)
+IF %(i=2) AND NOT (s=2) THEN PROC moveShip(%-4, %0, %1, %p(0)+8, %2)
+IF %(i=3) AND NOT (s=3) THEN PROC moveShip(%0, %-4, %0, %p(0), %3)
+IF %(i=4) AND NOT (s=4) THEN PROC moveShip(%0, %4, %0, %p(0), %4)
+IF %(i=5) AND NOT (s=5) THEN PROC moveShip(%3, %-3, %1, %p(0), %5)
+IF %(i=6) AND NOT (s=6) THEN PROC moveShip(%3, %3, %1, %p(0), %6)
+IF %(i=7) AND NOT (s=7) THEN PROC moveShip(%-3, %-3, %1, %p(0)+8, %7)
+IF %(i=8) AND NOT (s=8) THEN PROC moveShip(%-3, %3, %1, %p(0)+8, %8)
+IF %(i=0) AND NOT (s=0) THEN PROC stopShip(%p(0))
 ; Firing weapon
 IF %c>0 THEN %c=%c-1
 IF %(c=0) AND ( IN k(0)&k(1)=k(2)) THEN PROC shoot() TO %c
+; Spawn enemy wave
+LET %e=%e-1
+IF %e=0 THEN PROC wave()
+; Remove player invulnerability
+IF %p(0)=241 THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC vulnerable()
+; Verify if player can respawn... or show game over
+IF %p(0)=0 THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC respawnShip() TO %d
 ; Scroll background
 LET %f=%f-1
 IF %f=0 THEN PROC scroll(%l) TO %l: LET %f=4
 ; Play buffered sounds
 PROC playSounds()
-; Verify if player can respawn... or show game over
-IF %( NOT p(0)) THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC respawn() TO %d
 REPEAT UNTIL %d
 PROC psg(7, 255) : LET %m=23
 PRINT AT 11,11; INVERSE 1;" GAME OVER "
 FOR %i=0 TO 63: PAUSE 1: NEXT %i: PROC scroll(1)
 ENDPROC
 ;
-DEFPROC die(%k)
-LOCAL %x,%y
-IF %(k>31) THEN SPRITE %k,,,0: ; shots disappear
-LET %x=% SPRITE AT (48,0): LET %y=% SPRITE AT (48,1)
-SPRITE 48,,,,0
-SPRITE 127,%x,%y,5,1: ; Explosion
-SPRITE CONTINUE 127, STOP , STOP ,5 TO 10, BIN 1100000
-PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
-PROC addB(249,4,1): PROC addB(252,5,0)
-; apply "dead state"
-LET %p(0)=0: LET %p(3)=10
+DEFPROC unusedSpr(%l,%u)
+LET %u=%u+1: ; Upper included in range
+REPEAT : WHILE %( SPRITE l) : LET %l=%l+1 : REPEAT UNTIL %l=u
+ENDPROC =%l
+;
+DEFPROC psg(%r,%v)
+OUT 65533,%r: OUT 49149,%v
 ENDPROC
 ;
-DEFPROC respawn()
-LET %p(1)=%p(1)-1
-IF %p(1)=65535 THEN ENDPROC =%1
-LET %p(0)=1
-PRINT #1; AT 1,31;%p(1): ; Update lives
-SPRITE 48,150,160,0,1
-ENDPROC =%0
+DEFPROC wave()
+LOCAL %n, %i, %t, %x, %y
+READ %n, %e
+; PRINT AT 1,0;"n=";%n;" e=";%e;"   "'"                             "
+IF %(n=0) AND (e=0) THEN RESTORE : LET %e=50: ENDPROC
+FOR %i=1 TO %n
+READ %t, %x, %y
+; PRINT AT 2,0;"t=";%t;" x=";%x;" y=";%y;"  "
+PROC spawn(%t, %x, %y)
+NEXT %i
+READ %n
+IF %n THEN RESTORE : LET %e=50
+ENDPROC
+;
+DEFPROC spawn(%t, %x, %y)
+LOCAL %s,%u,%v,%m,%a
+; Select which alien to spawn
+LET %m= RND
+IF %m=0 THEN LET %m=9: ELSE LET %m=11
+PROC unusedSpr(1,30) TO %s
+IF %s=31 THEN ENDPROC
+SPRITE %s,%x,%y,%m,1
+IF %t=1 THEN LET %u=0: LET %v=2
+IF %t=2 THEN LET %u=2: LET %v=0
+IF %t=3 THEN LET %u=-2: LET %v=0
+IF %t=4 THEN LET %u=2: LET %v=2
+IF %t=5 THEN LET %u=-2: LET %v=2
+SPRITE CONTINUE %s, 16 TO 288 STEP % SGN {u} RUN ,16 TO 223 STEP % SGN {v} RUN ,%m TO %m+1, BIN 11,0
+ENDPROC
 ;
 DEFPROC shoot()
 LOCAL %x, %l
@@ -87,9 +115,36 @@ LET %p(2)=%p(2)+1: ; Score up
 PROC unusedSpr(60,75) TO %e
 IF %e=76 THEN ENDPROC
 SPRITE %e,%x,%y,5,1: ; Explosion
-SPRITE CONTINUE %e, STOP , STOP ,5 TO 10, BIN 1100000
+SPRITE CONTINUE %e, STOP , STOP ,3 TO 8, BIN 1100000
 PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
 PROC addB(249,4,1): PROC addB(252,5,0)
+ENDPROC
+;
+DEFPROC die(%k)
+LOCAL %x,%y
+IF %(k>31) THEN SPRITE %k,,,0: ; shots disappear
+LET %x=% SPRITE AT (48,0): LET %y=% SPRITE AT (48,1)
+SPRITE 48,,,,0
+SPRITE 127,%x,%y,5,1: ; Explosion
+SPRITE CONTINUE 127, STOP , STOP ,3 TO 8, BIN 1100000
+PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
+PROC addB(249,4,1): PROC addB(252,5,0)
+; apply "dead state"
+LET %p(0)=0: LET %p(3)=25
+LET %e=%e+30: ; delay next wave of enemies
+ENDPROC
+;
+DEFPROC respawnShip()
+LET %p(1)=%p(1)-1
+IF %p(1)=65535 THEN ENDPROC =%1
+LET %p(0)=241: LET %p(3)=25: ; Invulnerable for 25 SPRITE MOVEs
+PRINT #1; AT 1,31;%p(1): ; Update lives
+SPRITE 48,150,160,0,241
+ENDPROC =%0
+;
+DEFPROC vulnerable()
+LET %p(0)=1
+SPRITE 48,,,,1
 ENDPROC
 ;
 DEFPROC addA(%s)
@@ -131,8 +186,8 @@ SPRITE CONTINUE 48, STEP % SGN {x} RUN , STEP % SGN {y} RUN ,%p
 LET %s=%n
 ENDPROC
 ;
-DEFPROC stopShip()
-SPRITE 48,,,0,1
+DEFPROC stopShip(%f)
+SPRITE 48,,,0,%f
 SPRITE PAUSE 48
 LET %s=0
 ENDPROC
@@ -159,19 +214,8 @@ DEFPROC scroll(%p)
 LET %p=%p-1
 IF %p=65535 THEN LET %p=191
 LAYER 2,1: LAYER AT %0,%p: LAYER 0
-PRINT #1; AT 1,3;%p(2);"0": ; Update score
+PRINT #1; AT 1,7;%p(2);"0": ; Update score
 ENDPROC =%p
-;
-DEFPROC unusedSpr(%l,%u)
-LET %u=%u+1: ; Upper included in range
-REPEAT : WHILE %( SPRITE l)
-LET %l=%l+1
-REPEAT UNTIL %l=u
-ENDPROC =%l
-;
-DEFPROC psg(%r,%v)
-OUT 65533,%r: OUT 49149,%v
-ENDPROC
 ;
 DEFPROC initGame()
 LAYER 2,1: SPRITE PRINT 1
@@ -180,18 +224,8 @@ LET %p(0)=1: LET %p(1)=2: LET %p(2)=0
 ; Player Spaceship
 SPRITE 48,150,160,0,1
 SPRITE CONTINUE 48,32 TO 272 STOP ,32 TO 208 STOP ,0, BIN 10,0: ; player behaviour
-;
-; Alien enemies for testing purposes, get this out of here
-SPRITE 1,16,32,3,1
-SPRITE CONTINUE 1,16 TO 288 STEP 2 RUN , STOP ,3, BIN 10,0
-SPRITE 2,288,48,3,1
-SPRITE CONTINUE 2,16 TO 288 STEP -2 RUN , STOP ,3, BIN 10,0
-SPRITE 3,130,0,3,1
-SPRITE CONTINUE 3, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
-SPRITE 4,170,0,3,1
-SPRITE CONTINUE 4, STOP ,16 TO 223 STEP 2 RUN ,3, BIN 10,0
-;
-PRINT #1; INK 6; AT 1,0;"SC"; AT 1,29;"L"; INK 7; AT 1,31;%p(1)
+PRINT #1; INK 6; AT 1,0;"Score"; AT 1,25;"Lives"; INK 7; AT 1,31;%p(1): ; display lives
+RESTORE
 ENDPROC
 ;
 DEFPROC main()

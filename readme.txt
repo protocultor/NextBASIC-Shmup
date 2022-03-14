@@ -16,6 +16,14 @@ How to load
 3.- Load the newly created 'shmup.bas' and RUN it.
 
 
+About emulators
+---------------
+
+Current version of CSpect (2.15.1) is not able to run the game. The previous
+version (2.14.8) does run it, very slowly, about 50-75% of the speed on actual
+hardware.
+
+
 Player movement
 ---------------
 
@@ -169,6 +177,7 @@ Name    Type        Use
 %p()    int array   Player state (see below)
 %d      int         player truly Dead (go to game over)
 %e      int         time until next Enemy wave
+%h      int         Hyperaggresiveness? Time until next shot from enemy
 
 
 Player state
@@ -204,16 +213,20 @@ Pattern Use
 1       Player ship, leaning right
 2       Player shot
 3-8     Explosion animation
-9-13    Enemies and their animations
+9-12    Enemies and their animations
+13-16   Boss character (to do)
+17      Enemy shot
+18      Boss shot (to do)
 
 
 To Do
 -----
 
 Have to make it playable!
-- Make enemies shoot
+- Enemies shooting in different directions
 - Other types of enemies
 - Powerups? Bosses?
+- Some sort of ending?
 
 
 Acknowledgments
@@ -226,4 +239,4 @@ You, for your interest in the game and getting this far in the doc :)
 
 Jaime Moreira
 2020-08-23
-Last updated: 2022-03-12
+Last updated: 2022-03-14

@@ -12,7 +12,7 @@ DATA 0,0,0
 ;
 DEFPROC playGame()
 LOCAL %i, %c, %l, %f, %d
-LET %s=0: LET %c=7: LET %l=0: LET %f=4: LET %d=0: LET %e=30
+LET %s=0: LET %c=7: LET %l=0: LET %f=4: LET %d=0: LET %e=30: LET %h=20
 LET %a=0: LET %u=0: LET %b=0: LET %v=0
 REPEAT
 SPRITE MOVE
@@ -21,7 +21,7 @@ FOR %i=49 TO 56
 IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,4): IF %k THEN PROC kill(%k,%i)
 NEXT %i
 ; Checking impact on player
-IF %p(0)=1 THEN LET %k=% SPRITE OVER (48,1 TO 47,4): IF %k THEN PROC die(%k)
+IF %p(0)=1 THEN LET %k=% SPRITE OVER (48,1 TO 47,4,2): IF %k THEN PROC die(%k)
 ; Player movement FSM
 IF %p(0) THEN PROC filteredInput() TO %i: ELSE LET %i=9: LET %s=0: LET %c=2
 IF %(i=1) AND NOT (s=1) THEN PROC moveShip(%4, %0, %1, %p(0), %1)
@@ -39,6 +39,8 @@ IF %(c=0) AND ( IN k(0)&k(1)=k(2)) THEN PROC shoot() TO %c
 ; Spawn enemy wave
 LET %e=%e-1
 IF %e=0 THEN PROC wave()
+LET %h=%h-1
+IF %h=0 THEN PROC enemyfire() TO %h
 ; Remove player invulnerability
 IF %p(0)=241 THEN LET %p(3)=%p(3)-1: IF %p(3)=0 THEN PROC vulnerable()
 ; Verify if player can respawn... or show game over
@@ -90,7 +92,7 @@ IF %t=2 THEN LET %u=2: LET %v=0
 IF %t=3 THEN LET %u=-2: LET %v=0
 IF %t=4 THEN LET %u=2: LET %v=2
 IF %t=5 THEN LET %u=-2: LET %v=2
-SPRITE CONTINUE %s, 16 TO 288 STEP % SGN {u} RUN ,16 TO 223 STEP % SGN {v} RUN ,%m TO %m+1, BIN 11,0
+SPRITE CONTINUE %s, 16 TO 288 STEP % SGN {u} RUN, 16 TO 223 STEP % SGN {v} RUN, %m TO %m+1, BIN 11,0
 ENDPROC
 ;
 DEFPROC shoot()
@@ -120,9 +122,28 @@ PROC addB(240,1,0): PROC addB(243,2,1): PROC addB(246,3,1)
 PROC addB(249,4,1): PROC addB(252,5,0)
 ENDPROC
 ;
+DEFPROC enemyfire()
+LOCAL %l, %e, %r
+; Find an unused enemy shot sprite
+PROC unusedSpr(31,47) TO %l
+IF %l=48 THEN ENDPROC =%12
+; Find an enemy who will shoot
+LET %r=20: ; Attempts to find an enemy
+REPEAT
+LET %e=RND*29+1
+IF % (SPRITE e) THEN LET %r=0: ELSE LET %r=%r-1
+REPEAT UNTIL %r<2
+IF %r=1 THEN ENDPROC =%6: ; No enemy found
+; Start shot from enemy position
+SPRITE %l,% SPRITE AT (e,0),% SPRITE AT (e,1)+7,%17,%1
+SPRITE CONTINUE %l, STOP, %22 TO 223 STEP 4 RUN, %17, % BIN 11
+PROC addB(9,1,0): PROC addB(15,2,1): PROC addB(21,3,1)
+PROC addB(27,4,1): PROC addB(30,5,0)
+ENDPROC =%20
+;
 DEFPROC die(%k)
 LOCAL %x,%y
-IF %(k>31) THEN SPRITE %k,,,0: ; shots disappear
+IF %(k>30) THEN SPRITE %k,,,,0: ; shots disappear
 LET %x=% SPRITE AT (48,0): LET %y=% SPRITE AT (48,1)
 SPRITE 48,,,,0
 SPRITE 127,%x,%y,5,1: ; Explosion

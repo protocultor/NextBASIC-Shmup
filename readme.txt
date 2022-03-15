@@ -186,7 +186,7 @@ Player state
 %p() is an array with info about the player:
 
 Index  Use
-0      Alive (1) or dead (0)
+0      Alive (1), dead (0), invulnerable (241 = inverted palette)
 1      Lives
 2      Score
 3      Timer to respawn (used when dead)
@@ -237,8 +237,9 @@ Acknowledgments
 The entire Next Team, for the wonderful machine
 Garry Lancaster, for the language and the Invaders game which inspired this
 Remy Sharp for the info about audio and Layer 2
+Simon N Goodwin and Matthew Neale for performance tips
 You, for your interest in the game and getting this far in the doc :)
 
 Jaime Moreira
 2020-08-23
-Last updated: 2022-03-14
+Last updated: 2022-03-15

@@ -24,18 +24,18 @@ NEXT %i
 IF %p(0)=1 THEN LET %k=% SPRITE OVER (48,1 TO 47,4,2): IF %k THEN PROC die(%k)
 ; Player movement FSM
 IF %p(0) THEN PROC filteredInput() TO %i: ELSE LET %i=9: LET %s=0: LET %c=2
-IF %(i=1) AND NOT (s=1) THEN PROC moveShip(%4, %0, %1, %p(0), %1)
-IF %(i=2) AND NOT (s=2) THEN PROC moveShip(%-4, %0, %1, %p(0)+8, %2)
-IF %(i=3) AND NOT (s=3) THEN PROC moveShip(%0, %-4, %0, %p(0), %3)
-IF %(i=4) AND NOT (s=4) THEN PROC moveShip(%0, %4, %0, %p(0), %4)
-IF %(i=5) AND NOT (s=5) THEN PROC moveShip(%3, %-3, %1, %p(0), %5)
-IF %(i=6) AND NOT (s=6) THEN PROC moveShip(%3, %3, %1, %p(0), %6)
-IF %(i=7) AND NOT (s=7) THEN PROC moveShip(%-3, %-3, %1, %p(0)+8, %7)
-IF %(i=8) AND NOT (s=8) THEN PROC moveShip(%-3, %3, %1, %p(0)+8, %8)
-IF %(i=0) AND NOT (s=0) THEN PROC stopShip(%p(0))
+IF %(i=1) THEN IF %(s<>1) THEN PROC moveShip(%4, %0, %1, %p(0), %1)
+IF %(i=2) THEN IF %(s<>2) THEN PROC moveShip(%-4, %0, %1, %p(0)+8, %2)
+IF %(i=3) THEN IF %(s<>3) THEN PROC moveShip(%0, %-4, %0, %p(0), %3)
+IF %(i=4) THEN IF %(s<>4) THEN PROC moveShip(%0, %4, %0, %p(0), %4)
+IF %(i=5) THEN IF %(s<>5) THEN PROC moveShip(%3, %-3, %1, %p(0), %5)
+IF %(i=6) THEN IF %(s<>6) THEN PROC moveShip(%3, %3, %1, %p(0), %6)
+IF %(i=7) THEN IF %(s<>7) THEN PROC moveShip(%-3, %-3, %1, %p(0)+8, %7)
+IF %(i=8) THEN IF %(s<>8) THEN PROC moveShip(%-3, %3, %1, %p(0)+8, %8)
+IF %(i=0) THEN IF %(s<>0) THEN PROC stopShip(%p(0))
 ; Firing weapon
 IF %c>0 THEN %c=%c-1
-IF %(c=0) AND ( IN k(0)&k(1)=k(2)) THEN PROC shoot() TO %c
+IF %(c=0) THEN IF %( IN k(0)&k(1)=k(2)) THEN PROC shoot() TO %c
 ; Spawn enemy wave
 LET %e=%e-1
 IF %e=0 THEN PROC wave()
@@ -50,7 +50,8 @@ LET %f=%f-1
 IF %f=0 THEN PROC scroll(%l) TO %l: LET %f=4
 ; Play buffered sounds
 PROC playSounds()
-IF %p(4)=18 THEN LET %d=2: ; reached Ending
+; Reached Ending
+IF %p(4)=18 THEN LET %d=2
 REPEAT UNTIL %d
 PROC psg(7, 255) : LET %m=23
 IF %d=2 THEN PROC ending(): ELSE PRINT AT 11,11; INVERSE 1;" GAME OVER "
@@ -70,7 +71,7 @@ DEFPROC wave()
 LOCAL %n, %i, %t, %x, %y
 READ %n, %e
 ; PRINT AT 1,0;"n=";%n;" e=";%e;"   "'"                             "
-IF %(n=0) AND (e=0) THEN RESTORE : LET %p(4)=%p(4)+1: LET %e=50: ENDPROC
+IF %(n=0) THEN IF %(e=0) THEN RESTORE: LET %p(4)=%p(4)+1: LET %e=50: ENDPROC
 FOR %i=1 TO %n
 READ %t, %x, %y
 ; PRINT AT 2,0;"t=";%t;" x=";%x;" y=";%y;"  "
@@ -281,12 +282,13 @@ LAYER OVER 0 : LAYER 0: CLS
 POKE 23658,0: ; turn off CAPS LOCK
 PRINT AT 3,6; INK 2; FLASH 1;" NextBASIC Shmup! "
 PRINT AT 6,0;"Control options:"
-PRINT AT 8,5;"Keyboard - Q A O P Space"
-PRINT AT 10,5;"Kempston joystick"
-PRINT AT 14,2; INK 5;"Press "; INVERSE 1;"FIRE"; INVERSE 0;" in your preferred"' TAB 4;"control option to start"
+PRINT AT 8,5;"Keyboard"; AT 9,6;"* Space + Q A O P"; AT 10,6;"* Symbol Shift + Arrows"
+PRINT AT 12,5;"Kempston joystick"
+PRINT AT 15,2; INK 5;"Press "; INVERSE 1;"FIRE"; INVERSE 0;" in your preferred"' TAB 4;"control option to start"
 REPEAT
-IF %( IN 32766 & 1 = 0) THEN PROC setInput(0): LET %c=1
-IF %( IN 31 & 16 = 16) THEN PROC setInput(1): LET %c=1
+IF %(IN 32766&1=0) THEN PROC setInput(0): LET %c=1
+IF %(IN 32766&2=0) THEN PROC setInput(1): LET %c=1
+IF %(IN 31&16=16) THEN PROC setInput(2): LET %c=1
 REPEAT UNTIL %c=1
 PROC initGame()
 PROC playGame()
@@ -303,6 +305,7 @@ ENDPROC
 ;
 STOP
 #autoline
-9990 DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0 : ; Keyboard
-9991 DATA 31,16,16,31,1,1,31,2,2,31,8,8,31,4,4 : ; Kempston
+9990 DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0: ; Keys - QAOP Sp
+9991 DATA 32766,2,0,61438,4,0,63486,16,0,61438,8,0,61438,16,0: ; Keys - cursor SS
+9992 DATA 31,16,16,31,1,1,31,2,2,31,8,8,31,4,4: ; Kempston
 9999 CLEAR : SAVE "shmup.bas": .bas2txt shmup.bas

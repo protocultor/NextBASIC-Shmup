@@ -191,6 +191,8 @@ Index  Use
 2      Score
 3      Timer to respawn (used when dead)
        Also used to remove invulnerability after respawn
+4      Cycles of enemy waves completed
+       (times where DATA of enemy waves have been fully READ)
 
 
 Sprite IDs

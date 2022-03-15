@@ -50,9 +50,10 @@ LET %f=%f-1
 IF %f=0 THEN PROC scroll(%l) TO %l: LET %f=4
 ; Play buffered sounds
 PROC playSounds()
+IF %p(4)=18 THEN LET %d=2: ; reached Ending
 REPEAT UNTIL %d
 PROC psg(7, 255) : LET %m=23
-PRINT AT 11,11; INVERSE 1;" GAME OVER "
+IF %d=2 THEN PROC ending(): ELSE PRINT AT 11,11; INVERSE 1;" GAME OVER "
 FOR %i=0 TO 63: PAUSE 1: NEXT %i: PROC scroll(1)
 ENDPROC
 ;
@@ -69,14 +70,14 @@ DEFPROC wave()
 LOCAL %n, %i, %t, %x, %y
 READ %n, %e
 ; PRINT AT 1,0;"n=";%n;" e=";%e;"   "'"                             "
-IF %(n=0) AND (e=0) THEN RESTORE : LET %e=50: ENDPROC
+IF %(n=0) AND (e=0) THEN RESTORE : LET %p(4)=%p(4)+1: LET %e=50: ENDPROC
 FOR %i=1 TO %n
 READ %t, %x, %y
 ; PRINT AT 2,0;"t=";%t;" x=";%x;" y=";%y;"  "
 PROC spawn(%t, %x, %y)
 NEXT %i
 READ %n
-IF %n THEN RESTORE : LET %e=50
+IF %n THEN RESTORE : LET %e=50: ; Abnormal DATA, does not add to wave cycles (%p(4))
 ENDPROC
 ;
 DEFPROC spawn(%t, %x, %y)
@@ -238,15 +239,28 @@ LAYER 2,1: LAYER AT %0,%p: LAYER 0
 PRINT #1; AT 1,7;%p(2);"0": ; Update score
 ENDPROC =%p
 ;
+DEFPROC ending()
+PRINT AT 8,7; INVERSE 1; " Congratulations "; AT 10,2; INVERSE 0;"You have defeated the alien"; AT 11,2;"menace and saved the galaxy"
+RUN AT 0: PLAY "T180O6(CDEC)": RUN AT 3
+PROC initSounds()
+FOR %i=0 TO 150: PAUSE 1: NEXT %i
+ENDPROC
+;
 DEFPROC initGame()
 LAYER 2,1: SPRITE PRINT 1
 LAYER OVER 6: LAYER 0: CLS
-LET %p(0)=1: LET %p(1)=2: LET %p(2)=0
+LET %p(0)=1: LET %p(1)=2: LET %p(2)=0: LET %p(4)=0
 ; Player Spaceship
 SPRITE 48,150,160,0,1
 SPRITE CONTINUE 48,32 TO 272 STOP ,32 TO 208 STOP ,0, BIN 10,0: ; player behaviour
 PRINT #1; INK 6; AT 1,0;"Score"; AT 1,25;"Lives"; INK 7; AT 1,31;%p(1): ; display lives
 RESTORE
+ENDPROC
+;
+DEFPROC initSounds()
+PROC psg(7,255): LET %m=23:; mixer
+PROC psg(6,20): PROC psg(9,15): ; noise & ch B
+PROC psg(8,13): PROC psg(10,13):; ch A & C
 ENDPROC
 ;
 DEFPROC main()
@@ -260,10 +274,7 @@ LAYER PALETTE 0 BANK 12,0
 LAYER PALETTE 0: BANK 12 CLEAR
 LOAD "assets/shmup.spr" BANK 12
 SPRITE BANK 12: SPRITE STOP
-; Init sounds
-PROC psg(7,255): LET %m=23:; mixer
-PROC psg(6,20): PROC psg(9,15): ; noise & ch B
-PROC psg(8,13): PROC psg(10,13):; ch A & C
+PROC initSounds()
 REPEAT
 LET %c=0: LAYER 2,0: SPRITE CLEAR
 LAYER OVER 0 : LAYER 0: CLS

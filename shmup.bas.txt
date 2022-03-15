@@ -3,12 +3,6 @@
 ; NextBASIC Shmup!
 RUN AT 3
 PROC main()
-; Data for enemy waves
-DATA 2,40,1,130,0,1,170,0,0
-DATA 2,40,2,16,32,3,288,48,0
-DATA 2,30,4,16,16,5,288,0,0
-; Obligatory ending to reset data and start again
-DATA 0,0,0
 ;
 DEFPROC playGame()
 LOCAL %i, %c, %l, %f, %d
@@ -18,12 +12,12 @@ REPEAT
 SPRITE MOVE
 ; Checking kills
 FOR %i=49 TO 56
-IF % ( SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,4): IF %k THEN PROC kill(%k,%i)
+IF %(SPRITE i) THEN LET %k=% SPRITE OVER (i,1 TO 30,4): IF %k THEN PROC kill(%k,%i)
 NEXT %i
 ; Checking impact on player
 IF %p(0)=1 THEN LET %k=% SPRITE OVER (48,1 TO 47,4,2): IF %k THEN PROC die(%k)
 ; Player movement FSM
-IF %p(0) THEN PROC filteredInput() TO %i: ELSE LET %i=9: LET %s=0: LET %c=2
+IF %p(0) THEN PROC fInput() TO %i: ELSE LET %i=9: LET %s=0: LET %c=2
 IF %(i=1) THEN IF %(s<>1) THEN PROC moveShip(%4, %0, %1, %p(0), %1)
 IF %(i=2) THEN IF %(s<>2) THEN PROC moveShip(%-4, %0, %1, %p(0)+8, %2)
 IF %(i=3) THEN IF %(s<>3) THEN PROC moveShip(%0, %-4, %0, %p(0), %3)
@@ -60,12 +54,30 @@ ENDPROC
 ;
 DEFPROC unusedSpr(%l,%u)
 LET %u=%u+1: ; Upper included in range
-REPEAT : WHILE %( SPRITE l) : LET %l=%l+1 : REPEAT UNTIL %l=u
+REPEAT : WHILE %(SPRITE l) : LET %l=%l+1 : REPEAT UNTIL %l=u
 ENDPROC =%l
 ;
 DEFPROC psg(%r,%v)
 OUT 65533,%r: OUT 49149,%v
 ENDPROC
+; resolving SOCD to neutral
+DEFPROC fInput()
+LOCAL %r,%l,%u,%d
+LET %r=%(IN k(3)&k(4)=k(5))
+LET %l=%(IN k(6)&k(7)=k(8))
+LET %u=%(IN k(9)&k(10)=k(11))
+LET %d=%(IN k(12)&k(13)=k(14))
+IF %(r&l) THEN LET %r=%0: LET %l=%0
+IF %(u&d) THEN LET %u=%0: LET %d=%0
+IF %(u&r) THEN ENDPROC =%5
+IF %(d&r) THEN ENDPROC =%6
+IF %(u&l) THEN ENDPROC =%7
+IF %(d&l) THEN ENDPROC =%8
+IF %r THEN ENDPROC =%1
+IF %l THEN ENDPROC =%2
+IF %u THEN ENDPROC =%3
+IF %d THEN ENDPROC =%4
+ENDPROC =%0
 ;
 DEFPROC wave()
 LOCAL %n, %i, %t, %x, %y
@@ -215,24 +227,6 @@ SPRITE PAUSE 48
 LET %s=0
 ENDPROC
 ;
-DEFPROC filteredInput()
-LOCAL %r,%l,%u,%d
-LET %r=%( IN k(3)&k(4)=k(5))
-LET %l=%( IN k(6)&k(7)=k(8))
-LET %u=%( IN k(9)&k(10)=k(11))
-LET %d=%( IN k(12)&k(13)=k(14))
-IF %(r&l) THEN LET %r=%0: LET %l=%0
-IF %(u&d) THEN LET %u=%0: LET %d=%0
-IF %(u&r) THEN ENDPROC =%5
-IF %(d&r) THEN ENDPROC =%6
-IF %(u&l) THEN ENDPROC =%7
-IF %(d&l) THEN ENDPROC =%8
-IF %r THEN ENDPROC =%1
-IF %l THEN ENDPROC =%2
-IF %u THEN ENDPROC =%3
-IF %d THEN ENDPROC =%4
-ENDPROC =%0
-;
 DEFPROC scroll(%p)
 LET %p=%p-1
 IF %p=65535 THEN LET %p=191
@@ -303,6 +297,12 @@ READ %k(i)
 NEXT %i
 ENDPROC
 ;
+; Data for enemy waves
+DATA 2,40,1,130,0,1,170,0,0
+DATA 2,40,2,16,32,3,288,48,0
+DATA 2,30,4,16,16,5,288,0,0
+; Obligatory ending to reset data and start again
+DATA 0,0,0
 STOP
 #autoline
 9990 DATA 32766,1,0,57342,1,0,57342,2,0,64510,1,0,65022,1,0: ; Keys - QAOP Sp

@@ -139,8 +139,9 @@ After that, every enemy is a trio, which indicate type, x-coord and y-coord.
 "Type of enemy" in this context is "how the enemy moves in the screen".
 To finish the wave, there must be a 0.
 
-E.g. the first DATA in the program (line 7 approx.) contains the following:
-                  2,40,    1,130,0,    1,170,0,   0
+E.g. the first DATA in the program (near the end, after setInput() procedure)
+contains the following:
+                2, 40,     1, 130, 0,     1, 170, 0,    0
 This indicates that this wave is composed of 2 enemies, and the next wave after
 this will appear after 40 'time' has passed.
 Then, in this wave the first enemy is type 1, and will appear at x=130, y=0.
@@ -238,6 +239,7 @@ The entire Next Team, for the wonderful machine
 Garry Lancaster, for the language and the Invaders game which inspired this
 Remy Sharp for the info about audio and Layer 2
 Simon N Goodwin and Matthew Neale for performance tips
+Rodrigo Moreira for the beautiful sprites :D
 You, for your interest in the game and getting this far in the doc :)
 
 Jaime Moreira

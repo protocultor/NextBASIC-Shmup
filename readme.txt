@@ -20,8 +20,30 @@ About emulators
 ---------------
 
 Current version of CSpect (2.15.1) is not able to run the game. The previous
-version (2.14.8) does run it, very slowly, about 50-75% of the speed on actual
-hardware.
+version (2.14.8) does run it but very slowly, about 50-75% of the speed on
+actual hardware.
+
+
+Motivation for this project
+===========================
+
+I wanted to do a game that achieves 2 things:
+
+(1) Uses NextBASIC capabilities exclusively, so no calls to assembly, not even
+an audio driver is used, just to test the capabilities of the language on its
+own.
+
+(2) Has "Dijkstra-compliant" code, with no GO TOs, and hopefully no line
+numbers. This is difficult since makes me give up on GO SUBs and the
+possibility to use 'computed GOSUBS' as "dictionaries", avoiding a good deal of
+IF-THENs and improving performance. But I wanted to make readable code with a
+proper representation of "modular programming", so if you read every PROC on
+its own you should be able to understand everything.
+
+I know I betrayed (2) on the setInput() procedure, but will be the only
+exception ;)
+
+From here on, I'll explain every trick the program implements.
 
 
 Player movement
@@ -152,6 +174,21 @@ screen are a couple at the top center, descending. You can check the
 different 'types' at the "spawn()" procedure.
 
 
+Boss
+----
+
+Currently, only 1 is allowed to exist at any time. It's composed of 4 unified
+sprites with the following structure:   2 3
+                                        0 1
+As sprites 1-3 have a pattern relative to the anchor sprite 0, a single SPRITE
+CONTINUE to this anchor can be used for animation, since the relative sprites
+inherit the pattern from the anchor, or rather, the sum of their original
+pattern plus the anchor's pattern. This explains the order in which the sprites
+are in the file 'shmup.spr', since adding numbers close to 0 provides control
+on what the final patterns for every relative sprite will be.
+Again, see NextBASIC_New_Commands_and_Features.pdf, pages 7 to 10
+
+
 Variables
 ---------
 
@@ -179,6 +216,7 @@ Name    Type        Use
 %d      int         player truly Dead (go to game over)
 %e      int         time until next Enemy wave
 %h      int         Hyperaggresiveness? Time until next shot from enemy
+%o()    int array   bOss state (see below)
 
 
 Player state
@@ -196,28 +234,40 @@ Index  Use
        (times where DATA of enemy waves have been fully READ)
 
 
+Boss state
+----------
+
+Likewise, %o() is an array with info about the boss:
+
+Index  Use
+0      Absent (0), type of movement (1-3)
+1      Health
+
+
 Sprite IDs
 ----------
 
 Id      Use
 48      Player - couldn't be any other id :)
 49-57   Player shots
-1-30    Enemies
+4-30    Enemies
 31-47   Enemies' shots
 60-77   Enemies' explosions/deaths
 127     Player's death
+0-3     Boss
+126     Boss' death
 
 
 Sprite patterns
 ---------------
 
 Pattern Use
-0       Player ship, straight
-1       Player ship, leaning right
-2       Player shot
-3-8     Explosion animation
-9-12    Enemies and their animations
-13-16   Boss character (to do)
+4       Player ship, straight
+5       Player ship, leaning right
+16      Player shot
+6-11    Explosion animation
+12-15   Enemies and their animations
+0-3     Half of boss character and animation
 17      Enemy shot
 18      Boss shot (to do)
 
@@ -227,13 +277,14 @@ To Do
 
 Have to make it playable!
 - Enemies shooting in different directions
-- Other types of enemies
-- Powerups? Bosses?
-- Some sort of ending?
+- Make boss to shoot
+- Other types of waves
+- Powerups?
+- Improved ending? Change its condition?
 
 
 Acknowledgments
----------------
+===============
 
 The entire Next Team, for the wonderful machine
 Garry Lancaster, for the language and the Invaders game which inspired this
@@ -244,4 +295,4 @@ You, for your interest in the game and getting this far in the doc :)
 
 Jaime Moreira
 2020-08-23
-Last updated: 2022-03-15
+Last updated: 2022-03-19

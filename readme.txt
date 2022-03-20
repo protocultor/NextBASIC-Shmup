@@ -117,9 +117,9 @@ channel.
 Sound playing
 -------------
 
-Only one AY will be used, with "2 channels", since A and C will play the same
-sound, and their coarse setting will always be 0. On the other side, B will have
-coarse and fine, and will be able to produce noise when necessary.
+Only one AY is used, with "2 channels", since A and C play the same sound, and
+their coarse setting is always 0. On the other side, B has coarse and fine, and
+is able to produce noise when necessary.
 
 Then, 4 elements are needed:
 1.- Channel A & C fine tone - %a() - %a - %u
@@ -127,11 +127,11 @@ Then, 4 elements are needed:
 3.- Channel B coarse tone   - %c() - %b - %v
 4.- Noise (on or off)       - %n() - %b - %v
 
-As said in the previous section, 4 circular queues will be used, with the last
-3 using the same "head" and "tail", %b and %v respectively.
+As said in the previous section, 4 circular queues are used, with the last 3
+using the same "head" and "tail", %b and %v respectively.
 
-To avoid changing the PSG mixer settings every time, we will store previous
-settings in %m, as a binary value with 0 = enabled and 1 = disabled:
+To avoid changing the PSG mixer settings every time, previous mixer settings
+are stored in %m, as a binary value with 0 = enabled and 1 = disabled:
 
                              0 0 0 N 0 A B A
 
@@ -141,7 +141,7 @@ settings in %m, as a binary value with 0 = enabled and 1 = disabled:
 
 Then, %m = (16*N) + (5*A) + (2*B)
 
-If you ask yourself what is all of this, why it works this way, please read my
+If you are wondering what is all of this, why it works this way, please read my
 guide about generating sounds through OUT commands to the PSG:
 https://www.specnext.com/forum/viewtopic.php?f=14&t=1796
 
@@ -151,21 +151,38 @@ previous SPRITE MOVE, mixer settings are changed in the PSG and saved to %m.
 Only after that, queues will advance and actual sound will be played.
 
 
-Enemy waves
------------
+Enemy wave spawning
+-------------------
 
-They're in DATA statements, handled by the wave() procedure. First data is the
-amount of enemies in this wave, second is the time to read the next wave, with
-"time" being the amount of SPRITE MOVEs called (see playGame() procedure).
-After that, every enemy is a trio, which indicate type, x-coord and y-coord.
-"Type of enemy" in this context is "how the enemy moves in the screen".
-To finish the wave, there must be a 0.
+An "enemy wave" in this game's context is "enemies that spawn at the exact same
+time". Having a short time between waves provides the illusion of a "coordinated
+attack", while a longer time gives the pause one would expect from a "different
+group of attackers".
+
+DATA about enemies are READ by the wave() procedure in the following format:
+
+- Number of enemies in the wave
+- Time until next wave (in "game frames" - amount of SPRITE MOVE calls)
+- Times the number of enemies, the following structure:
+   - Enemy type
+   - X position of spawn
+   - Y position of spawn
+- "Null terminator" (0).
+
+"Enemy type" in this context is "how the enemy moves across the screen".
+Position of spawn should always be outside of visible screen (BORDER coords).
+
+RESTORE, which means spawning reset to the beginning, will occur when:
+- "Number of enemies" and "Next spawn" are both 0
+- "Null terminator" is not found when expected
+Any of them could mean "end of stage" in the future. We'll see.
 
 E.g. the first DATA in the program (near the end, after setInput() procedure)
 contains the following:
                 2, 40,     1, 130, 0,     1, 170, 0,    0
+
 This indicates that this wave is composed of 2 enemies, and the next wave after
-this will appear after 40 'time' has passed.
+this will appear after 40 'SPRITE MOVEs'.
 Then, in this wave the first enemy is type 1, and will appear at x=130, y=0.
 The second enemy is also type 1 and will appear at x=170, y=0.
 Then, the needed "0" to finish the reading of this wave.
@@ -178,8 +195,10 @@ Boss
 ----
 
 Currently, only 1 is allowed to exist at any time. It's composed of 4 unified
-sprites with the following structure:   2 3
-                                        0 1
+sprites with the following structure:
+                                    2 3
+                                    0 1
+
 As sprites 1-3 have a pattern relative to the anchor sprite 0, a single SPRITE
 CONTINUE to this anchor can be used for animation, since the relative sprites
 inherit the pattern from the anchor, or rather, the sum of their original
@@ -225,13 +244,20 @@ Player state
 %p() is an array with info about the player:
 
 Index  Use
-0      Alive (1), dead (0), invulnerable (241 = inverted palette)
+0      Dead (0), alive (1) or invulnerable (241)*
 1      Lives
 2      Score
 3      Timer to respawn (used when dead)
-       Also used to remove invulnerability after respawn
+       Also used to disable invulnerability after respawn
 4      Cycles of enemy waves completed
        (times where DATA of enemy waves have been fully READ)
+
+* Index 0, player vital status, affects player SPRITE flags, so colors are
+inverted when player is invulnerable (just respawning).
+
+      1 = 00000001 <- visible SPRITE, normal palette
+    241 = 11110001 <- visible SPRITE, palette offset changed
+   +  8 = 00001000 <- + X-mirrored, when going left
 
 
 Boss state
@@ -242,6 +268,9 @@ Likewise, %o() is an array with info about the boss:
 Index  Use
 0      Absent (0), type of movement (1-3)
 1      Health
+2      Time until next shot *
+
+* The boss only shoots when its type of movement is 3
 
 
 Sprite IDs
@@ -288,11 +317,11 @@ Acknowledgments
 
 The entire Next Team, for the wonderful machine
 Garry Lancaster, for the language and the Invaders game which inspired this
-Remy Sharp for the info about audio and Layer 2
-Simon N Goodwin and Matthew Neale for performance tips
-Rodrigo Moreira for the beautiful sprites :D
-You, for your interest in the game and getting this far in the doc :)
+Remy Sharp, for the info about audio and Layer 2
+Simon N Goodwin and Matthew Neale, for performance tips
+Rodrigo Moreira, for the beautiful sprites :)
+You, for your interest in the game and getting this far in the document
 
 Jaime Moreira
 2020-08-23
-Last updated: 2022-03-19
+Last updated: 2022-03-20
